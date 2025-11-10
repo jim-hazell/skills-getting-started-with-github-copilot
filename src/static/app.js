@@ -40,9 +40,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 .toUpperCase();
 
               return `
-                <li class="participant" title="${label}">
+                <li class="participant" title="${label}" data-activity="${name}" data-email="${label}">
                   <span class="avatar">${initials}</span>
                   <span class="name">${label}</span>
+                  <button class="delete-btn" aria-label="Unregister ${label}" data-activity="${name}" data-email="${label}">🗑️</button>
                 </li>
               `;
             })
@@ -65,6 +66,52 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
 
         activitiesList.appendChild(activityCard);
+
+          // Attach delete/unregister handlers for this activity's participant buttons
+          const deleteButtons = activityCard.querySelectorAll('.delete-btn');
+          deleteButtons.forEach((btn) => {
+            btn.addEventListener('click', async (ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              const activity = btn.getAttribute('data-activity');
+              const email = btn.getAttribute('data-email');
+
+              if (!activity || !email) return;
+
+              // Confirm quick UX (optional) - simple confirm to avoid accidental removals
+              const ok = confirm(`Unregister ${email} from ${activity}?`);
+              if (!ok) return;
+
+              try {
+                const resp = await fetch(
+                  `/activities/${encodeURIComponent(activity)}/participants?email=${encodeURIComponent(email)}`,
+                  { method: 'DELETE' }
+                );
+
+                const result = await resp.json().catch(() => ({}));
+
+                if (resp.ok) {
+                  // Re-fetch activities to update participant lists and availability counts
+                  await fetchActivities();
+
+                  messageDiv.textContent = result.message || `${email} unregistered from ${activity}`;
+                  messageDiv.className = 'success';
+                  messageDiv.classList.remove('hidden');
+
+                  setTimeout(() => messageDiv.classList.add('hidden'), 4000);
+                } else {
+                  messageDiv.textContent = result.detail || 'Failed to unregister participant';
+                  messageDiv.className = 'error';
+                  messageDiv.classList.remove('hidden');
+                }
+              } catch (err) {
+                console.error('Error unregistering participant:', err);
+                messageDiv.textContent = 'Failed to unregister. Please try again.';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+              }
+            });
+          });
 
         // Add option to select dropdown
         const option = document.createElement("option");
@@ -99,6 +146,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities so the UI shows the new participant and updated availability
+        await fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";

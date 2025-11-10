@@ -193,6 +193,23 @@ footer {
   border: 1px solid rgba(26,35,126,0.08);
 }
 
+/* Delete / unregister button beside participant */
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: #c62828;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 6px;
+  margin-left: 6px;
+  border-radius: 4px;
+}
+
+.delete-btn:hover {
+  background: rgba(198,40,40,0.08);
+}
+
 /* empty state */
 .participants .empty {
   font-style: italic;
