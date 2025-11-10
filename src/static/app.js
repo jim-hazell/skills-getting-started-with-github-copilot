@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // Clear loading message
       activitiesList.innerHTML = "";
 
+      // Reset activity select (keep placeholder)
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
+
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
@@ -20,11 +23,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        // Build participants list markup
+        let participantsMarkup = "";
+        if (details.participants && details.participants.length > 0) {
+          const items = details.participants
+            .map((p) => {
+              // Derive a short label / initials from an email or name
+              const label = String(p);
+              const local = label.split("@")[0] || label;
+              const initials = local
+                .split(/[\.\-_ ]+/)
+                .map((s) => s[0])
+                .filter(Boolean)
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
+
+              return `
+                <li class="participant" title="${label}">
+                  <span class="avatar">${initials}</span>
+                  <span class="name">${label}</span>
+                </li>
+              `;
+            })
+            .join("");
+          participantsMarkup = `<ul class="participant-list">${items}</ul>`;
+        } else {
+          participantsMarkup = `<div class="empty">No participants yet</div>`;
+        }
+
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+
+          <div class="participants">
+            <h5>Participants</h5>
+            ${participantsMarkup}
+          </div>
         `;
 
         activitiesList.appendChild(activityCard);
